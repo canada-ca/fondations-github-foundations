@@ -1,0 +1,230 @@
+name: "Drift Detection Jobs"
+
+on:
+  schedule:
+    - cron: "10 0 * * *"
+  issues:
+    types: [labeled]
+
+
+env:
+  tf_version: 1.7.5
+  tg_version: 0.55.18
+  default_branch: main
+  drift_label: Drift
+  action_required_label: Action Required
+  working_dir: .
+  GCP_SECRET_MANAGER_PROJECT: "${{ vars.GCP_SECRET_MANAGER_PROJECT }}"
+  GCP_TF_STATE_BUCKET_PROJECT: "${{ vars.TF_STATE_BUCKET_PROJECT_ID}}"
+  GCP_TF_STATE_BUCKET_NAME: "${{vars.TF_STATE_BUCKET_NAME}}"
+  GCP_TF_STATE_BUCKET_LOCATION: "${{vars.TF_STATE_BUCKET_LOCATION}}"
+
+jobs:
+  run-drift-detection:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: 'write'
+      issues: 'write'
+    name: "Run Drift Detection"
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ env.working_dir }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.default_branch }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.tf_version }}
+
+      - name: GCP Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+
+      - name: Check Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Check Terragrunt HCL
+        id: grunt-fmt
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
+
+      - name: Terragrunt Plan
+        id: plan
+        uses: gruntwork-io/terragrunt-action@v2
+        continue-on-error: true
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'run-all plan --terragrunt-no-color -detailed-exitcode --out tfplan'
+
+      - name: Terragrunt Plan Condensing
+        id: condense
+        uses: gruntwork-io/terragrunt-action@v2
+        continue-on-error: true
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'run-all show tfplan'
+
+      - name: Terragrunt Plan Cleaning
+        id: clean
+        run: |
+          TG_OUT=$(echo "${{ steps.condense.outputs.tg_action_output }}" | sed 's|%0A|\n|g')
+          echo "PLAN<<EOF" >> $GITHUB_ENV
+          echo "$TG_OUT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Issue
+        uses: actions/github-script@v7
+        if: steps.plan.outputs.tg_action_exit_code == 2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const {drift_label, action_required_label} = process.env
+            const output = `
+            #### Terraform Plan Drift Detected
+
+            <details><summary>Review the plan output and take appropriate actions</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>`;
+
+            const issues = (await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: drift_label,
+              sort: 'created',
+              direction: 'desc',
+              per_page: 1
+            })).data;
+
+            if (issues.length == 0) {
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Drift Detected',
+                body: output,
+                labels: [drift_label, action_required_label]
+              });
+            }else {
+              github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body: output,
+                labels: [drift_label, action_required_label]
+              });
+            }
+
+  re-run-apply:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: 'write'
+      issues: 'write'
+    name: "Run Apply"
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'Re-Apply'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: organizations
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.default_branch }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.tf_version }}
+
+      - name: GCP Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+
+      - name: Check Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Check Terragrunt HCL
+        id: grunt-fmt
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
+
+      - name: Terragrunt Apply
+        id: apply
+        continue-on-error: true
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'run-all apply --terragrunt-no-color '
+
+      - name: Close Issue
+        uses: actions/github-script@v7
+        if: steps.apply.outputs.tg_action_exit_code == 0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const {drift_label} = process.env
+            github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed',
+              labels: [drift_label]
+            })
+
+      - name: Remove Label And Link Failed Workflow Run
+        uses: actions/github-script@v7
+        if: steps.apply.outputs.tg_action_exit_code != 0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const {drift_label, action_required_label} = process.env
+            const body = `Re-Apply workflow failed: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            github.rest.issues.setLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: [drift_label, action_required_label]
+            })
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            })

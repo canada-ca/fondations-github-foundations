@@ -1,0 +1,241 @@
+name: "Pull And Push Jobs"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+
+env:
+  tf_version: 1.7.5
+  tg_version: 0.55.18
+  working_dir: .
+  GCP_SECRET_MANAGER_PROJECT: "${{ vars.GCP_SECRET_MANAGER_PROJECT }}"
+  GCP_TF_STATE_BUCKET_PROJECT: "${{ vars.TF_STATE_BUCKET_PROJECT_ID}}"
+  GCP_TF_STATE_BUCKET_NAME: "${{vars.TF_STATE_BUCKET_NAME}}"
+  GCP_TF_STATE_BUCKET_LOCATION: "${{vars.TF_STATE_BUCKET_LOCATION}}"
+
+jobs:
+  terraform-plan-and-apply:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: 'write'
+      issues: 'write'
+    name: "Terraform Plan and Apply"
+    runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-plan-and-apply
+      cancel-in-progress: false
+    outputs:
+      lock_files: ${{ steps.find-stale-lock-files.outputs.stale_lock_files }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ env.working_dir }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.tf_version }}
+
+      - name: GCP Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+          cleanup_credentials: false
+
+      - name: Check Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Check Terragrunt HCL
+        id: grunt-fmt
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'hclfmt --terragrunt-check --terragrunt-diff'
+
+      - name: Terragrunt Plan
+        id: plan
+        uses: gruntwork-io/terragrunt-action@v2
+        continue-on-error: true
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'run-all plan -out tfplan'
+
+
+      - name: Check whether there are any changes
+        id: changes
+        run: |
+          tfplan=$(cat<<EOF
+          ${{ steps.plan.outputs.tg_action_output }}
+          EOF
+          )
+          if [ -n "$tfplan" ]; then
+            echo "plan_size=$(echo "${tfplan}" | wc -l) "
+            echo "plan_size=$(echo "${tfplan}" | wc -l) " >> $GITHUB_OUTPUT
+          fi
+
+      - name: Terragrunt Plan Condensing
+        id: condense
+        if: steps.changes.outputs.plan_size > 0
+        uses: gruntwork-io/terragrunt-action@v2
+        continue-on-error: true
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'run-all show tfplan --terragrunt-no-color -no-color'
+
+      - name: Terragrunt Plan Cleaning
+        id: clean
+        if: steps.changes.outputs.plan_size > 0
+        run: |
+          TG_OUT=$(echo "${{ steps.condense.outputs.tg_action_output }}" | sed 's|%0A|\n|g')
+          echo "condensed_plan<<EOF" >> $GITHUB_OUTPUT
+          echo "$TG_OUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update Pull Request
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request' && steps.changes.outputs.plan_size > 0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terragrunt Format and Style 🖌\`${{ steps.grunt-fmt.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${{ steps.clean.outputs.condensed_plan }}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Check/Count Deletions
+        id: deletions
+        if: github.event_name == 'pull_request' && steps.changes.outputs.plan_size > 0
+        continue-on-error: true
+        run: |
+          tfplan=$(cat<<EOF
+          ${{ steps.clean.outputs.condensed_plan }}
+          EOF
+          )
+          DELETIONS=0
+          if [ -n "$tfplan" ]; then
+            DELETIONS=$(echo "${tfplan}" | grep -c "will be destroyed" || echo "")
+            echo "The plan is: $(echo "${tfplan}" | wc -l) lines long."
+          fi
+
+          echo "deletions=${DELETIONS}" >> $GITHUB_OUTPUT
+          echo "${DELETIONS} Deletion(s) found in the plan."
+
+      - name: Comment on PR if deletions
+        if: github.event_name == 'pull_request' && steps.deletions.outputs.deletions > 0
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### ⚠️ The Terraform Plan contains ${process.env.DELETIONS} Deletion(s) ⚠️
+            Please review the plan and ensure that the deletions are expected.
+
+            If the deletions are expected, you must:
+
+              1. Create a new comment on this PR.
+              2. Set the contents to \`delete\` (no quotes)
+              3. Press the comment button.
+
+            before you can merge.`;
+
+            github.rest.pulls.createReview({
+              pull_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output,
+              event: 'REQUEST_CHANGES'
+            })
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terragrunt Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.changes.outputs.plan_size > 0
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: 'run-all apply --terragrunt-no-color'
+
+      - name: Find stale Terraform lock files
+        id: find-stale-lock-files
+        uses: FociSolutions/github-foundations/organizations/.github/actions/find-tf-lockfiles@main
+        if: failure()
+        with:
+          terragrunt_output: ${{ steps.plan.outputs.tg_action_output }}
+          tf_state_path: "gs://${{ vars.TF_STATE_BUCKET_NAME }}/terraform/github-foundations/organizations/"
+
+  clean-stale-locks:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      pull-requests: 'write'
+      issues: 'write'
+    name: "Clean Stale Locks"
+    runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-plan-and-apply
+      cancel-in-progress: false
+    needs: terraform-plan-and-apply
+    if: failure() && needs.terraform-plan-and-apply.outputs.lock_files
+    strategy:
+      fail-fast: false
+      matrix:
+        lock_file_info: ${{ fromJson(needs.terraform-plan-and-apply.outputs.lock_files).* }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.tf_version }}
+
+      - name: GCP Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+
+      - name: Clean stale locks
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ matrix.lock_file_info.path }}
+          tg_command: "force-unlock -force ${{ matrix.lock_file_info.id }}"

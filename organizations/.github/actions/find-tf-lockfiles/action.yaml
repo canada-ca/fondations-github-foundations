@@ -1,0 +1,121 @@
+name: Clean TF lock files
+description: 'Clean stale Terraform lock files'
+inputs:
+  terragrunt_output:
+    description: 'The output of the Terragrunt plan command, containing a lock error.'
+    required: true
+  tf_state_path:
+    description: 'The base path to the Terraform state files. Will be used to determine the relative paths of state locks'
+    required: true
+outputs:
+  stale_lock_files:
+    description: 'A list of stale lock files that were removed.'
+    value: ${{ steps.find-stale-locks.outputs.stale_lock_files }}
+
+runs:
+  using: 'composite'
+  steps:
+      - name: Collect lock file metadata on error
+        shell: bash
+        id: collect-lock-files
+        run: |
+          tg_action_output=$(cat<<EOF
+          ${{ inputs.terragrunt_output }}
+          EOF
+          )
+
+          lock_info_blocks=$(echo -e "$tg_action_output" | grep -Pzo "Lock Info:.*?Info:\s*" | tr -dc '[:print:]' | sed 's/%0A/\n/g' )
+
+          IFS=$'\n\n'  # Set internal field separator to two newlines
+          declare -A lock_info_array
+
+          index=-1
+          while read -r line; do
+
+            lock_info=""
+
+            # Check if line starts with "Lock Info:"
+            if [[ $line =~ .*ID:.* ]]; then
+              index=$(($index + 1))
+              # Extract key-value pairs and store in array
+              id_value=$(echo "${line#*:}" | tr -d '[:space:]')  # Remove leading/trailing whitespace for value
+              id_info="{\"id\":\"$id_value\"}"
+
+            elif
+              # get the path
+              [[ $line =~ .*Path:.* ]]; then
+                path=$(echo "${line#*:}")
+
+                # Clean the spaces at the beginning of the value
+                path_value=$(echo $path | sed 's/^[ \t]*//')
+
+                # remove the base path from the path
+                path_value=$(echo $path_value | sed "s|${{ inputs.tf_state_path }}||")
+
+                # remove the trailing "default.tflock" from the path
+                path_value=$(echo $path_value | sed 's/default.tflock//')
+
+                # remove the last character, and append
+                first_part=${id_info%?}
+                id_info="$first_part,\"path\":\"$path_value\"}"
+            elif
+              # get the created time
+              [[ $line =~ .*Created:.* ]]; then
+                created=$(echo "${line#*:}")
+
+                # Clean the spaces at the beginning of the value
+                created_value=$(echo $created | sed 's/^[ \t]*//')
+                created_value=$(echo $created_value | sed 's/ /T/')  # Replace first space with T
+                created_value=$(echo $created_value | sed 's/\+0000 UTC/+00:00/')  # Replace " +0000 UTC" with "+00:00"
+
+                # remove the last character, and append
+                first_part=${id_info%?}
+                lock_info="$first_part,\"created\":\"$created_value\"}"
+
+                echo -e "Found lock $index: $lock_info"
+            fi
+
+            # Append lock info to array
+            if [[ -n $lock_info ]]; then
+              lock_info_array[$index]=$lock_info
+            fi
+
+          done < <(echo -e "$lock_info_blocks")
+          # done
+
+          unset IFS  # Reset IFS to default behavior
+
+          # Set the array as an output
+          echo "lock_files=$(IFS=','; echo "[${lock_info_array[*]}")]" >> $GITHUB_OUTPUT
+
+      - name: Find stale locks
+        shell: bash
+        id: find-stale-locks
+        if: steps.collect-lock-files.outputs.lock_files != ''
+        run: |
+          lock_files=$(echo -e '${{ steps.collect-lock-files.outputs.lock_files }}')
+
+          locks=""
+          while read -r lock_file; do
+
+            # use JQ to get the Created field
+            lock_created=$(jq -r '.created' <<< $lock_file)
+
+            if [ -n "$lock_created" ]; then
+
+              lock_created_epoch=$(date -d "$lock_created" +%s)
+              current_epoch=$(date +%s)
+              age=$((current_epoch - lock_created_epoch))
+              echo "Lock created $lock_created is $age seconds old."
+
+            # If the lock is older than 1 hour, list it
+              if [ $age -gt 3600 ]; then
+                # Add the entry to the stale lock files array
+                locks=$(echo "$locks,$lock_file")
+              fi
+            fi
+          done < <(echo "$lock_files" | jq -c '.[]')
+
+          stale_lock_files="[${locks#,}]"
+          # Set the array as an output
+          echo "stale_lock_files=${stale_lock_files}" >> $GITHUB_OUTPUT

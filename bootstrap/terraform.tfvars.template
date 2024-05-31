@@ -1,0 +1,25 @@
+org_id = "<REPLACE-ME>"
+
+billing_account = "<REPLACE-ME>"
+
+github_account_type = "Enterprise"      # "Personal", "Organization", "Enterprise"
+
+github_enterprise_slug = "<REPLACE-ME>"
+
+github_foundations_organization_name = "<REPLACE-ME>"
+
+github_organization_admin_logins = []
+
+github_organization_billing_email = "<REPLACE-ME>"
+
+github_enterprise_organizations = {
+    # A map of organizations to create under the enterprise account. The key will be your organizations id
+    # and must comply with github naming rules
+    # Example:
+    # "Uncaffeinated-Solutions" = {
+    #   display_name  = "Uncaffeinated Solutions"
+    #   description   = "Needs Caffeine
+    #   billing_email = "billing@uncaffeinated.com
+    #   admin_logins  = ["fred@uncaffeinated.com" ]
+    # }
+}
