@@ -1,0 +1,33 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.18.3
+    hooks:
+    -   id: commitizen
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-added-large-files
+    -   id: detect-private-key
+-   repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.88.1
+    hooks:
+    -   id: terraform_fmt
+        args:
+            - --args=-check
+            - --args=-diff
+    -   id: terragrunt_fmt
+        args:
+            - --args=-terragrunt-exclude-dir=*/.terragrunt-cache/*
+            - --args=-terragrunt-check
+            - --args=-terragrunt-diff
+    -   id: terraform_tflint
+    -   id: terraform_validate
+        args:
+            - --hook-config=--retry-once-with-cleanup=true
+    -   id: terraform_trivy # static analysis of security settings in your Terraform code
+        args:
+            - --args=--skip-dirs="**/.terraform"

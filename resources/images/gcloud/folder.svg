@@ -1,0 +1,6 @@
+<svg data-icon-name="folderIcon" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+    <path fill-rule="evenodd"
+        fill="#3367D6"
+        d="M9 5v-.998C9 3.456 8.55 3 7.997 3H3.003A.996.996 0 002 4.002v9.996A1.006 1.006 0 003.007 15h11.986A1 1 0 0016 14.005v-8.01c0-.54-.45-.995-1.007-.995H9z">
+    </path>
+</svg>

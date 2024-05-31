@@ -1,0 +1,66 @@
+name: Package Audit Logs
+
+on:
+    schedule:
+        - cron: "30 3 * * *"
+    workflow_dispatch:
+
+env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+    find-orgs:
+        runs-on: ubuntu-latest
+        outputs:
+            orgs: ${{ steps.find-orgs-step.outputs.orgs }}
+        steps:
+            - name: Checkout the GitHub Foundations repository
+              uses: actions/checkout@v4
+
+            - name: Get the Go CLI
+              run: |
+                curl -OL https://github.com/FociSolutions/github-foundations-cli/releases/latest/download/github-foundations-cli_Linux_x86_64.tar.gz
+                tar -xzf github-foundations-cli_Linux_x86_64.tar.gz
+
+            - name: Find Orgs
+              id: find-orgs-step
+              run: |
+                orgs=$(./github-foundations-cli list orgs ${{ github.workspace }}/organizations/)
+                echo -e "Found orgs: $orgs"
+                echo "orgs=$(echo -e "${orgs}" | sed s/\'/\"/g)" >> $GITHUB_OUTPUT
+
+    package-audit-logs:
+        runs-on: ubuntu-latest
+        needs: find-orgs
+        permissions:
+            actions: read
+            contents: write
+            id-token: write
+        strategy:
+            matrix:
+                org: ${{ fromJson(needs.find-orgs.outputs.orgs) }}
+        steps:
+            - name: Checkout the GitHub Foundations repository
+              uses: actions/checkout@v4
+
+            - name: Get the GitHub token
+              id: generate_token
+              uses: FociSolutions/github-foundations/organizations/.github/actions/get-gh-token-gcp@main
+              with:
+                  repo_name: "${{ matrix.org }}/"
+                  gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+                  workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+
+            - name: Download Audit Logs
+              id: download-audit-logs
+              run: |
+                # Get today's date, and take only yesterday's logs
+                yesterday=$(date -d "yesterday" '+%Y-%m-%d')
+                curl -H "Authorization: token ${{ steps.generate_token.outputs.token }}" https://api.github.com/orgs/${{ matrix.org }}/audit-log?phrase=created:${yesterday} > audit-log-${yesterday}.json
+                echo "logfile=audit-log-${yesterday}.json" >> $GITHUB_OUTPUT
+
+            - name: Package Audit Logs
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ matrix.org }}-${{ steps.download-audit-logs.outputs.logfile }}
+                  path: ${{ steps.download-audit-logs.outputs.logfile }}
