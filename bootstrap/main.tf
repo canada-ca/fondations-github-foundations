@@ -19,7 +19,7 @@ module "github_gcloud_oidc" {
   ]
 
   #Bucket
-  bucket_name = "github-tf-state-bucket"
+  bucket_name = local.tf_state_bucket_name
   location    = "northamerica-northeast1"
   versioning  = true
   lifecycle_rules = {

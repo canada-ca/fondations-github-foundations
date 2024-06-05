@@ -1,0 +1,2 @@
+# Ignore a warning about customer encryption on buckets
+AVD-GCP-0066

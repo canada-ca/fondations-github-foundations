@@ -54,6 +54,10 @@ variable "github_account_type" {
     condition     = var.github_account_type == "Personal" || var.github_account_type == "Organization" || var.github_account_type == "Enterprise"
     error_message = "The github_account_type value must be 'Personal', 'Organization', or 'Enterprise'."
   }
+}
 
-
+variable "tf_state_bucket_name" {
+  type        = string
+  description = "The name to use for the Cloud storage bucket for storing terraform state. Defaults to 'github-tf-state-bucket-{{ var.org_id }}'."
+  default     = ""
 }
