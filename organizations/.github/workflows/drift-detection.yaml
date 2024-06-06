@@ -14,10 +14,23 @@ env:
   drift_label: Drift
   action_required_label: Action Required
   working_dir: .
+  # Select your cloud provider
+  cloud_provider: gcp
+  # Required Variables For GCP
   GCP_SECRET_MANAGER_PROJECT: "${{ vars.GCP_SECRET_MANAGER_PROJECT }}"
   GCP_TF_STATE_BUCKET_PROJECT: "${{ vars.TF_STATE_BUCKET_PROJECT_ID}}"
   GCP_TF_STATE_BUCKET_NAME: "${{vars.TF_STATE_BUCKET_NAME}}"
   GCP_TF_STATE_BUCKET_LOCATION: "${{vars.TF_STATE_BUCKET_LOCATION}}"
+  # Required Variables For Azure
+  AZURE_KEY_VAULT_ID: "${{ vars.AZURE_KEY_VAULT_ID }}"
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_SUBSCRIPTION_ID: "${{ vars.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  ARM_USE_OIDC: true
+  # Optional, used to configure the backend target. However this can be configured inline with strings
+  AZURE_CONTAINER_NAME: "${{ vars.AZURE_CONTAINER_NAME }}"
+  AZURE_RESOURCE_GROUP_NAME: "${{ vars.AZURE_RESOURCE_GROUP_NAME}}"
+  AZURE_STORAGE_ACCOUNT_NAME: "${{vars.AZURE_STORAGE_ACCOUNT_NAME}}"
 
 jobs:
   run-drift-detection:
@@ -46,6 +59,7 @@ jobs:
 
       - name: GCP Auth
         id: auth
+        if: ${{ env.cloud_provider == 'gcp' }}
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
@@ -163,6 +177,7 @@ jobs:
 
       - name: GCP Auth
         id: auth
+        if: ${{ env.cloud_provider == 'gcp' }}
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"

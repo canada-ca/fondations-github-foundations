@@ -45,10 +45,10 @@ jobs:
 
             - name: Get the GitHub token
               id: generate_token
-              uses: FociSolutions/github-foundations/organizations/.github/actions/get-gh-token-gcp@main
+              uses: FociSolutions/github-foundations/organizations/.github/actions/get-gh-token@main
               with:
                   secret_store: 'gcp'
-                  repo_name: "${{ matrix.org }}/"
+                  repo_name: ${{ matrix.repo }}
                   gcp_service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
                   workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
 
