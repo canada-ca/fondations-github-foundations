@@ -58,6 +58,18 @@ variable "github_account_type" {
 
 variable "tf_state_bucket_name" {
   type        = string
-  description = "The name to use for the Cloud storage bucket for storing terraform state. Defaults to 'github-tf-state-bucket-{{ var.org_id }}'."
+  description = "The name to use for the Cloud storage bucket for storing terraform state. Defaults to 'ghf-state-{{ var.org_id }}'."
   default     = ""
+}
+
+variable "tf_state_project" {
+  type        = string
+  description = "The project (GCP), or resource group (Azure) to use for the Cloud storage bucket for storing terraform state. Defaults to the project being deployed to."
+  default     = "github-foundations"
+}
+
+variable "tf_state_location" {
+  type        = string
+  description = "The location of the tf_state_project. Defaults to 'northamerica-northeast1'."
+  default     = "northamerica-northeast1"
 }

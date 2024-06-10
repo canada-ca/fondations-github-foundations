@@ -1,57 +1,41 @@
 locals {
   oidc_configuration = {
-    gcp = {
-      workload_identity_provider_name   = module.github_oidc.provider_name
-      bootstrap_workload_identity_sa    = module.github_oidc.bootstrap_sa
-      organization_workload_identity_sa = module.github_oidc.organizations_sa
-      gcp_secret_manager_project_id     = module.github_oidc.project_id
-
-      gcp_tf_state_bucket_project_id = module.github_oidc.project_id
-      bucket_name                    = module.github_oidc.bucket_name
-      bucket_location                = module.github_oidc.bucket_location
-      readme_path                    = ""
+    azure = {
+      bootstrap_client_id    = module.github_oidc.bootstrap_client_id
+      organization_client_id = module.github_oidc.organization_client_id
+      tenant_id              = module.github_oidc.tenant_id
+      subscription_id        = module.github_oidc.subscription_id
+      resource_group_name    = module.github_oidc.resource_group
+      storage_account_name   = module.github_oidc.sa_name
+      container_name         = module.github_oidc.container_name
+      key_vault_id           = module.github_oidc.key_vault_id
     }
   }
+
+  # Set a default state container name if one is not provided
+  az_state_container = var.tf_state_bucket_name == "" ? "ghf-state" : var.tf_state_bucket_name
 }
 
 module "github_oidc" {
-  source = "github.com/FociSolutions/github-foundations-modules//modules/github-gcloud-oidc?ref=v0.0.3"
+  source = "github.com/FociSolutions/github-foundations-modules//modules/github-azure-oidc?ref=v0.0.3"
 
-  #Folder
-  parent      = "organizations/${var.org_id}"
-  folder_name = "fldr-github-foundations"
+  rg_name     = var.tf_state_project
+  rg_create   = true
 
-  #Project
-  billing_account = var.billing_account
-  project_name    = var.tf_state_project
-  prefix          = "prj-g"
-  services = [
-    "storage-api.googleapis.com",
-    "iam.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "iamcredentials.googleapis.com",
-    "sts.googleapis.com",
-    "secretmanager.googleapis.com"
-  ]
+  rg_location = var.tf_state_location
 
-  #Bucket
-  bucket_name = local.tf_state_bucket_name
-  location    = var.tf_state_location
-  versioning  = true
-  lifecycle_rules = {
-    lr-0 = {
-      action = {
-        type = "Delete"
-      }
-      condition = {
-        num_newer_versions = "5"
-      }
-    }
-  }
-  force_destroy = true
+  sa_name                                               = "ghfoundations"
+  sa_tier                                               = "Standard"
+  sa_replication_type                                   = "LRS"
+  tf_state_container                                    = local.az_state_container
+  tf_state_container_anonymous_access_level             = "private"
+  tf_state_container_encryption_scope_override_enabled  = false
 
-  #OIDC Setup
+  kv_resource_group = var.secret_store_project
+  kv_name           = var.secret_store_name
+
   github_foundations_organization_name = var.github_foundations_organization_name
+  drift_detection_branch_name          = "main"
 }
 
 # Github foundations setup

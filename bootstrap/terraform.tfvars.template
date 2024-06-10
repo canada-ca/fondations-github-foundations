@@ -23,3 +23,9 @@ github_enterprise_organizations = {
     #   admin_logins  = ["fred@uncaffeinated.com" ]
     # }
 }
+
+# If using Azure
+# tf_state_location = "Canada East"
+# To bring your own Azure Key Vault, set the following variables
+# secret_store_name = "<REPLACE-ME>"
+# secret_store_project = "ghf-secrets-rg"
