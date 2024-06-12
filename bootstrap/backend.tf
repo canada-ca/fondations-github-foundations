@@ -14,10 +14,27 @@
  * limitations under the License.
  */
 
-# After the first successful "terraform apply" uncomment this block and run "terraform init"
+# After the first successful "terraform apply":
+#
+# - uncomment this block
+# - replace the state bucket/container name with the one you set, or the default.
+# - (Optional) If using Azure: Replace the Storage Account name
+# - run "terraform init"
+
+### GCP ###
 # terraform {
 #   backend "gcs" {
-#     bucket = "github-tf-state-bucket"
+#     bucket = "github-foundations-tf-state-4034205967392"
 #     prefix = "terraform/github-foundations/bootstrap"
 #   }
+# }
+
+### AZURE ###
+# terraform {
+#  backend "azurerm" {
+#    resource_group_name  = "github-foundations"
+#    storage_account_name = "ghfoundations"
+#    container_name       = "ghf-state"
+#    key                  = "prod.terraform.tfstate"
+#  }
 # }

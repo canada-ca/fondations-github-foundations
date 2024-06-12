@@ -10,10 +10,6 @@ env:
   tf_version: 1.7.5
   tg_version: 0.55.18
   working_dir: .
-  GCP_SECRET_MANAGER_PROJECT: "${{ vars.GCP_SECRET_MANAGER_PROJECT }}"
-  GCP_TF_STATE_BUCKET_PROJECT: "${{ vars.TF_STATE_BUCKET_PROJECT_ID}}"
-  GCP_TF_STATE_BUCKET_NAME: "${{vars.TF_STATE_BUCKET_NAME}}"
-  GCP_TF_STATE_BUCKET_LOCATION: "${{vars.TF_STATE_BUCKET_LOCATION}}"
 
 jobs:
     confirm-deletion:
