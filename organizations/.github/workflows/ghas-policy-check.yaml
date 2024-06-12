@@ -26,8 +26,7 @@ jobs:
             - name: Get the list of repos with GHAS enabled
               id: repo_list
               run: |
-                echo "Finding applicable repos in \"${{ github.workspace }}/projects/\""
-                repos=$(./github-foundations-cli list repos --ghas ${{ github.workspace }}/projects/)
+                repos=$(echo $(./github-foundations-cli list repos --ghas ${{ github.workspace }}/projects))
                 echo -e "Found repos: $repos"
                 echo "repos=$(echo -e "${repos}" | sed s/\'/\"/g)" >> $GITHUB_OUTPUT
 
