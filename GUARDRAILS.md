@@ -30,6 +30,7 @@ This guardrail document relates to Software as a Service (SaaS), specifically De
 | 06  | [Network security services](./guardrails/EN/06_Network-Security-Services.md) |
 | 07  | [Cyber defense services](./guardrails/EN/07_Cyber-Defense-Services.md) |
 | 08  | [Logging and monitoring](./guardrails/EN/08_Logging-and-Monitoring.md) |
+| 09  | [Plan for Continuity](./guardrails/EN/09_Plan-for-Continuity.md) |
 
 
 ## After the first 30 business days
