@@ -1,0 +1,4 @@
+variable "github_thumbprints" {
+  type        = list(string)
+  description = "A list of strings containing Github CA thumbprints."
+}

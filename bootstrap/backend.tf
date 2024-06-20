@@ -38,3 +38,14 @@
 #    key                  = "prod.terraform.tfstate"
 #  }
 # }
+
+### AWS ###
+# terraform {
+#  backend "azurerm" {
+#    bucket         = "ghf-state"
+#    region         = "<AWS-REGION>"
+#    encrypt        = true
+#    key            = "bootstrap.terraform.tfstate"
+#    dynamodb_table = "tfstatelocks"
+#  }
+# }

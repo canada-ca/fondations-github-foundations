@@ -29,3 +29,6 @@ github_enterprise_organizations = {
 # To bring your own Azure Key Vault, set the following variables
 # secret_store_name = "<REPLACE-ME>"
 # secret_store_project = "ghf-secrets-rg"
+
+# If using AWS
+# github_thumbprints = ["1b511abead59c6ce207077c0bf0e0043b1382612"]

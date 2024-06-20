@@ -28,6 +28,11 @@ env:
   AZURE_CONTAINER_NAME: "${{ vars.AZURE_CONTAINER_NAME }}"
   AZURE_RESOURCE_GROUP_NAME: "${{ vars.AZURE_RESOURCE_GROUP_NAME}}"
   AZURE_STORAGE_ACCOUNT_NAME: "${{vars.AZURE_STORAGE_ACCOUNT_NAME}}"
+  # Requried Variables For AWS
+  S3_BUCKET_NAME: "${{ vars.AWS_S3_BUCKET }}"
+  AWS_REGION: "${{ vars.AWS_REGION }}" 
+  AWS_IAM_ROLE: "${{ secrets.AWS_IAM_ROLE }}"
+  AWS_DYNAMO_DB_TABLE: "${{ vars.AWS_DYNAMO_DB_TABLE }}"
 
 jobs:
   terraform-plan-and-apply:
@@ -64,6 +69,14 @@ jobs:
           workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
           service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
           cleanup_credentials: false
+
+      - name: AWS Auth
+        id: aws-auth
+        if: ${{ env.cloud_provider == 'aws' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "${{ env.AWS_IAM_ROLE }}"
+          aws-region: "${{ env.AWS_REGION }}"
 
       - name: Check Terraform Format
         id: fmt
@@ -208,7 +221,7 @@ jobs:
       - name: Find stale Terraform lock files
         id: find-stale-lock-files
         uses: FociSolutions/github-foundations/organizations/.github/actions/find-tf-lockfiles@main
-        if: ${{ failure() &&  env.cloud_provider != 'azure' }}
+        if: ${{ failure() &&  env.cloud_provider != 'azure' &&  env.cloud_provider != 'aws' }}
         with:
           terragrunt_output: ${{ steps.plan.outputs.tg_action_output }}
           tf_state_path: "gs://${{ vars.TF_STATE_BUCKET_NAME }}/terraform/github-foundations/organizations/"

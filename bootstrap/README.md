@@ -2,7 +2,7 @@
 
 This layer of the toolkit contains all the terraform needed to:
 
- 1. Setup a GCP or Azure project with secret management, workload federated identity for github OIDC, and a bucket for terraform state storage.
+ 1. Setup a GCP, AWS or Azure project with secret management, workload federated identity for github OIDC, and a bucket for terraform state storage.
  2. Setup an organization under a github enterprise account for all the github foundation related repositories.
  3. Perform initial creation of all other organizations under a github enterprise account.
 
@@ -29,6 +29,7 @@ Before running the bootstrap layer, please ensure you have the following prerequ
 * Github Foundations currently provides modules to setup OIDC for the following cloud providers:
     * [Azure](./AZURE_SETUP.md)
     * [Google Cloud Platform](./GCP_SETUP.md)
+    * [Amazon Web Services](./AWS_SETUP.md)
 * If you want to use Github Foundations with a different cloud provider refer to the section [below](Running the Bootstrap Layer With An Unsupported Cloud Provider).
 
 **Resources:**
@@ -49,17 +50,27 @@ The following section will describe how to setup variables to run the bootstrap 
 
 If you are using Azure as your cloud provider, you will need to setup the Azure terraform files.
 
-1. Delete each of these files to:
-    * `main.tf.gcp`
-    * `providers.tf.gcp`
-    * `versions.tf.gcp`
+1. Delete each of the following files:
+    * `main.tf`
+    * `providers.tf`
+    * `versions.tf`
     They are GCP configuration, and not needed for Azure.
-3. Copy the `azure/main.tf.azure` file into the root of the repository and rename it to `main.tf`.
-4. Copy the `azure/providers.tf.azure` file into the root of the repository and rename it to `providers.tf`.
-5. Copy the `azure/versions.tf.azure` file into the root of the repository and rename it to `versions.tf`.
-6. Copy the `azure/variables-override.tf.azure` file into the root of the repository and rename it to `variables-override.tf`.
+2. Copy the `azure/main.tf.azure` file into the root of the repository and rename it to `main.tf`.
+3. Copy the `azure/providers.tf.azure` file into the root of the repository and rename it to `providers.tf`.
+4. Copy the `azure/versions.tf.azure` file into the root of the repository and rename it to `versions.tf`.
+5. Copy the `azure/variables-override.tf.azure` file into the root of the repository and rename it to `variables-override.tf`.
 
+### AWS Setup (Optional)
 
+If you are using AWS as your cloud provider, you will need to setup the AWS terraform files.
+1. Delete each of the following files:
+    * `main.tf`
+    * `providers.tf`
+    * `versions.tf`
+2. Copy the `aws/main.tf.aws` file into the root of the repository and rename it to `main.tf`.
+3. Copy the `aws/providers.tf.aws` file into the root of the repository and rename it to `providers.tf`.
+4. Copy the `aws/versions.tf.aws` file into the root of the repository and rename it to `versions.tf`.
+5. Copy the `aws/variables-override.tf.aws` file into the root of the repository and rename it to `variables-override.tf`.
 
 ### Configuring Variables
 
@@ -70,33 +81,31 @@ $ cp terraform.tfvars.example terraform.tfvars
 $ nano terraform.tfvars
 ```
 
-For both a single organization and multi organization approach the following variables are required:
-- `org_id`: The id of the gcp organization that will have the project that has the terraform state file bucket(s).
-- `billing_account`: The billing account to use for the gcp project that has teh terraform state file bucket(s).
-- `github_foundations_organization_name`: The name of the organization that will host the github foundation repositories. In the case of the multi-org approach this must be an organization name that doesn't already exist. However for the single org approach this should be the name of an existing organization that you want to use.
+#### Variables For Both Multi and Single Organization Approach
 
-To use the toolkit in a multi-organization approach the following variables are required in addition to the previous:
-- `github_enterprise_slug`: The slug of the enterprise account that own your organization(s).
-- `github_organization_admin_logins`: A list of github users that will be given admin permissions to the github foundation organization.
-- `github_organization_billing_email`: A email for billing to set in the github foundation organization.
+| Name | GCP | Azure | AWS | Description |
+|------|-----|-------|-----|-------------|
+| `org_id` | Required | N/A | N/A | The id of the GCP organization that will have the project that has the terraform state file bucket. | 
+| `billing_account` | Required | N/A | N/A | The billing account to use for the GCP project that has the terraform state file bucket. |
+| `github_foundations_organization_name` | Required | Required | Required | The name of the organization that will host the github foundation repositories. In the case of the multi-org approach this must be an organization name that doesn't already exist. However for the single org approach this should be the name of an existing organization that you want to use. |
+| `tf_state_bucket_name` | Optional | Optional | Optional | The name of the bucket / container to store the terraform state file. If not set a default name will be used. |
+| `tf_state_location` | Optional | Optional | N/A | The location / region to use for the cloud resources. If not set a default location will be used. |
+| `secret_store_name` | N/A | Optional | N/A | The name to use for a secret manager store. To bring your own Azure Key Vault, specify the name of the Azure Key Vault you want to use. If not set, a new Azure Key Vault will be created using a default name. |
+| `secret_store_project` | N/A | Optional | N/A | The Azure resource group name where the secrets will be stored. If not set a default name will be used. |
+| `github_thumbprints` | N/A | N/A | Required | A list of github server certificate thumbprints required to setup the AWS openid connect provider. For more information on how to obtain this thumbprint refer to [AWS documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc_verify-thumbprint.html). |
 
-For the multi-organization approach the following variable is optional:
-- `github_enterprise_organizations`: A map of organizations to create under the enterprise account. You can still use the organization layer to manage organizations under your enterprise account that weren't created this way so this is optional.
+#### Variables for Multi Organization Approach
 
-For any configuration the following are optional:
-- `tf_state_bucket_name`: The name of the bucket to store the terraform state file. If not set a default name will be used.
-- `tf_state_location`: The location of the bucket to store the terraform state file. If not set a default location will be used.
-
-For any configuration, using `Azure` as the cloud provider, the following are optional:
-- `secret_store_name`: The name to use for a secret manager store. To bring your own Azure Key Vault, specify the name of the Azure Key Vault you want to use. If not set, a new Azure Key Vault will be created using a default name.
-- `secret_store_project`: The container / project name where the secrets will be stored. If not set a default name will be used.
-
+| Name | GCP | Azure | AWS | Description |
+|------|-----|-------|-----|-------------|
+| `github_enterprise_slug` | Required | Required | Required | The slug of the enterprise account that own your organization(s) |
+| `github_organization_admin_logins` | Required | Required | Required | A list of github users that will be given admin permissions to the github foundation organization. |
+| `github_organization_billing_email` | Required | Required | Required | A email for billing to set in the github foundation organization. |
+| `github_enterprise_organizations` | Optional | Optional | Optional | A map of organizations to create under the enterprise account. You can still use the organization layer to manage organizations under your enterprise account that weren't created this way so this is optional. |
 
 ## Running the Bootstrap Layer
 
 This section outlines the steps to run the bootstrap layer. Remember to ensure you have met the prerequisites detailed in the previous section before proceeding.
-
-### Running the Bootstrap Layer
 
 To run the bootstrap layer perform the following steps:
 
@@ -139,6 +148,27 @@ terraform {
 ```
   * replace the `container_name` with the one you set in the `terraform.tfvars` file, or the default one (`ghf-state-`) if you didn't set it.
   * replace the `storage_account_name` with the name of the `sa_name` output from the previous step.
+
+---
+
+**AWS**
+
+It should be the block that looks likethis:
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "ghf-state"
+    region         = "<AWS-REGION>"
+    encrypt        = true
+    key            = "bootstrap.terraform.tfstate"
+    dynamodb_table = "TFLockIds"
+  }
+ }
+```
+
+  * replace the `<AWS-REGION>` with the region the s3 bucket is in. This line can also be removed if the environment variable `AWS_DEFAULT_REGION` or `AWS_REGION` has already been set.
+  * replace `bucket` with the name of the s3 bucket you set in the `terraform.tfvars` file.
+  * if you set the `tflock_db_name` variable for the aws oidc module, replace `dynamodb_table` with the value used. 
 
 ---
 

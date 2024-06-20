@@ -1,41 +1,27 @@
 locals {
   oidc_configuration = {
-    azure = {
-      bootstrap_client_id    = module.github_oidc.bootstrap_client_id
-      organization_client_id = module.github_oidc.organization_client_id
-      tenant_id              = module.github_oidc.tenant_id
-      subscription_id        = module.github_oidc.subscription_id
-      resource_group_name    = module.github_oidc.resource_group
-      storage_account_name   = module.github_oidc.sa_name
-      container_name         = module.github_oidc.container_name
-      key_vault_id           = module.github_oidc.key_vault_id
+    aws = {
+      s3_bucket                   = module.github_oidc.s3_bucket_name
+      region                      = module.github_oidc.s3_bucket_region
+      dynamodb_table              = module.github_oidc.dynamodb_table_name
+      organizations_role          = module.github_oidc.organizations_runner_role
     }
   }
 
   # Set a default state container name if one is not provided
-  az_state_container = var.tf_state_bucket_name == "" ? "ghf-state" : var.tf_state_bucket_name
+  bucket_name = var.tf_state_bucket_name == "" ? "ghf-state" : var.tf_state_bucket_name
 }
 
 module "github_oidc" {
-  source = "github.com/FociSolutions/github-foundations-modules//modules/github-azure-oidc?ref=v0.0.5"
+  source = "github.com/FociSolutions/github-foundations-modules//modules/github-aws-oidc?ref=v0.0.5"
 
   rg_name     = var.tf_state_project
-  rg_create   = true
-
-  rg_location = var.tf_state_location
-
-  sa_name                                               = "ghfoundations"
-  sa_tier                                               = "Standard"
-  sa_replication_type                                   = "LRS"
-  tf_state_container                                    = local.az_state_container
-  tf_state_container_anonymous_access_level             = "private"
-  tf_state_container_encryption_scope_override_enabled  = false
-
-  kv_resource_group = var.secret_store_project
-  kv_name           = var.secret_store_name
+  
+  bucket_name = local.bucket_name
+  
+  github_thumbprints = var.github_thumbprints
 
   github_foundations_organization_name = var.github_foundations_organization_name
-  drift_detection_branch_name          = "main"
 }
 
 # Github foundations setup
