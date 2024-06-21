@@ -140,7 +140,7 @@ Installation initiale du programme dorsal de vos fichiers d’état et création
 * **Protection contre la suppression :** pour confirmer la suppression des ressources si celle-ci répond à un changement dans une demande de tirage.
 * **Vérifications de la fonctionnalité GHAS :** pour vérifier l’état de la fonctionnalité GHAS dans les dépôts où elle est activée et faire état des analyses GHAS dans un seul rapport.
 * **Outil d’évaluation :** pour évaluer la préparation de votre dépôt avant son importation avec la trousse et possiblement vérifier si les mesures de protection de la trousse sont déjà mises en place dans le dépôt.
-* **Outil d’importation :** importer des dépôts qui ne sont pas actuellement gérés par la trousse.
+* **Outil d’importation :** pour importer des dépôts qui ne sont pas actuellement gérés par la trousse.
 
 ## Comment apporter sa contribution
 
