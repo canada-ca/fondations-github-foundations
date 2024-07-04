@@ -8,6 +8,22 @@ This layer of the toolkit contains all the terraform needed to:
 
  This layer is meant to be run locally by a user that can authenticate with the `admin:enterprise, admin:org, repo, workflow` scopes.
 
+ # Table of Contents
+
+  - [System Diagram](#system-diagram)
+  - [Prerequisites for Running the Bootstrap Layer](#prerequisites-for-running-the-bootstrap-layer)
+  - [Single Organization Setup Vs Multi-Organization Setup](#single-organization-setup-vs-multi-organization-setup)
+      - [Azure Setup (Optional)](#azure-setup-optional)
+      - [AWS Setup (Optional)](#aws-setup-optional)
+      - [Configuring Variables](#configuring-variables)
+          - [Variables For Both Multi and Single Organization Approach](#variables-for-both-multi-and-single-organization-approach)
+          - [Variables For Multi Organization Approach](#variables-for-multi-organization-approach)
+  - [Running the Bootstrap Layer](#running-the-bootstrap-layer)
+      - [Running the Bootstrap Layer With An Unsupported Cloud Provider](#running-the-bootstrap-layer-with-an-unsupported-cloud-provider)
+      - [Generating a Plan (Without Execution)](#generating-a-plan-without-execution)
+      - [Generating and Executing a Plan](#generating-and-executing-a-plan)
+
+
 ## System Diagram
 
 ![System Diagram](../resources/images/system_diagram.png)
@@ -85,14 +101,14 @@ $ nano terraform.tfvars
 
 | Name | GCP | Azure | AWS | Description |
 |------|-----|-------|-----|-------------|
-| `org_id` | Required | N/A | N/A | The id of the GCP organization that will have the project that has the terraform state file bucket. | 
+| `org_id` | Required | N/A | N/A | The id of the GCP organization that will have the project that has the terraform state file bucket. |
 | `billing_account` | Required | N/A | N/A | The billing account to use for the GCP project that has the terraform state file bucket. |
 | `github_foundations_organization_name` | Required | Required | Required | The name of the organization that will host the github foundation repositories. In the case of the multi-org approach this must be an organization name that doesn't already exist. However for the single org approach this should be the name of an existing organization that you want to use. |
 | `tf_state_bucket_name` | Optional | Optional | Optional | The name of the bucket / container to store the terraform state file. If not set a default name will be used. |
 | `tf_state_location` | Optional | Optional | N/A | The location / region to use for the cloud resources. If not set a default location will be used. |
 | `secret_store_name` | N/A | Optional | N/A | The name to use for a secret manager store. To bring your own Azure Key Vault, specify the name of the Azure Key Vault you want to use. If not set, a new Azure Key Vault will be created using a default name. |
 | `secret_store_project` | N/A | Optional | N/A | The Azure resource group name where the secrets will be stored. If not set a default name will be used. |
-| `github_thumbprints` | N/A | N/A | Required | A list of github server certificate thumbprints required to setup the AWS openid connect provider. For more information on how to obtain this thumbprint refer to [AWS documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc_verify-thumbprint.html). |
+| `github_thumbprints` | N/A | N/A | Required | A list of github server certificate thumbprints required to setup the AWS openid connect provider. For more information on how to obtain this thumbprint refer to [AWS documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc_verify-thumbprint.html) or see the [Setup Instructions here](./AWS_SETUP.md#calculate-thumbprint-of-github-oidc-provider). |
 
 #### Variables for Multi Organization Approach
 
@@ -168,7 +184,7 @@ terraform {
 
   * replace the `<AWS-REGION>` with the region the s3 bucket is in. This line can also be removed if the environment variable `AWS_DEFAULT_REGION` or `AWS_REGION` has already been set.
   * replace `bucket` with the name of the s3 bucket you set in the `terraform.tfvars` file.
-  * if you set the `tflock_db_name` variable for the aws oidc module, replace `dynamodb_table` with the value used. 
+  * if you set the `tflock_db_name` variable for the aws oidc module, replace `dynamodb_table` with the value used.
 
 ---
 
