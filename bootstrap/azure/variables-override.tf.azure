@@ -1,4 +1,4 @@
-variable secret_store_project {
+variable "secret_store_project" {
   type        = string
   description = "The project/resource group to use for the secret store / key vault."
   default     = "ghf-secrets-rg"

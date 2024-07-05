@@ -1,0 +1,11 @@
+provider "aws" {
+}
+
+provider "github" {
+  alias = "enterprise_scoped"
+}
+
+provider "github" {
+  alias = "foundation_org_scoped"
+  owner = var.github_foundations_organization_name
+}

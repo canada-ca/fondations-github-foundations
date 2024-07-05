@@ -64,7 +64,7 @@ variable "tf_state_bucket_name" {
 
 variable "tf_state_project" {
   type        = string
-  description = "The project (GCP), or resource group (Azure) to use for the Cloud storage bucket for storing terraform state. Defaults to the project being deployed to."
+  description = "The project (GCP), or resource group (Azure/AWS) to use for the Cloud storage bucket for storing terraform state. Defaults to the project being deployed to."
   default     = "github-foundations"
 }
 
