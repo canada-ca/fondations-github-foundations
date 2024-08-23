@@ -10,8 +10,9 @@ This section contains the Guardrails that address controls in the following area
 
 - Access Control (AC)
 - Auditing and Accountability (AU)
-- Identification and Authentication (IA)
-- System Information and Integrity (SI)
+- Security Assessment and Authorization (CA)
+- System and Services Acquisition (SA)
+- System and Communications Protection (SC)
 
 ## Mandatory Requirements
 
@@ -19,6 +20,7 @@ This section contains the Guardrails that address controls in the following area
 | --- | --- |
 | The system Monitors and Controls Remote Access Methods | <ul><li>Set, via configuration, the rules around remote access</li><li>Log and audit all remote access</li></ul> |
 | Encryption of Remote Access Sessions | <ul><li>Ensure that all remote access sessions are encrypted</li><li>Ensure that the encryption is in accordance with the GC [Encryption Guidance](https://www.cyber.gc.ca/en/guidance/cryptographic-algorithms-unclassified-protected-protected-b-information-itsp40111)</li></ul> |
+| Document any external connections to your SCM, for example: <ul><li>External connections from the SCM Runner containers to external services</li><li>Any webhooks that are used to trigger SCM workflows</li></ul> | <ul><li>Provide evidence that external connections to your SCM are documented</li><li>List any ports or protocols that are used to access the SCM</li><li>ensure appropriate safeguards are in place for connecting to  (e.g. Unclassified, Low Low (ULL) to Protected B, Medium, Medium (PBMM))</li></ul>|
 
 ## Conditional Requirements
 
@@ -46,4 +48,9 @@ This section contains the Guardrails that address controls in the following area
 
 ## Related security controls from ITSG-33
 
-AC3, AC-3(7), AC-4, AC-5, AC-6, AC6(5), AC-6(10), AC-17(1), AC-17(2), AC-19, AC-20(3), AU-6, AU-12, IA-2, IA-2(1), IA-2(11), IA-4, IA-5, IA-5(1), SC-8, SC-8(1), SI-4
+
+AC-5, AC-6, AC-6(5), AC-17, AC-17(9), AC-19, AC-20, AC-20(1),
+AU-6,
+CA-3, CA-3(3), CA-3(5),
+SA-9(1), SA-9(2), SA-9(4)
+SC-1, SC-7(3), SC-12, SC-12(1), SC-12(2), SC-12(3), SC-17

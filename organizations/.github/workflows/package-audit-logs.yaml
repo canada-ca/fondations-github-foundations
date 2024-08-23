@@ -36,6 +36,7 @@ jobs:
             actions: read
             contents: write
             id-token: write
+
         strategy:
             matrix:
                 org: ${{ fromJson(needs.find-orgs.outputs.orgs) }}
@@ -54,14 +55,97 @@ jobs:
 
             - name: Download Audit Logs
               id: download-audit-logs
-              run: |
-                # Get today's date, and take only yesterday's logs
-                yesterday=$(date -d "yesterday" '+%Y-%m-%d')
-                curl -H "Authorization: token ${{ steps.generate_token.outputs.token }}" https://api.github.com/orgs/${{ matrix.org }}/audit-log?phrase=created:${yesterday} > audit-log-${yesterday}.json
-                echo "logfile=audit-log-${yesterday}.json" >> $GITHUB_OUTPUT
+              uses: actions/github-script@v7
+              with:
+                script: |
+                  async function getPaginatedData(resourcePath) {
+                    const nextPattern = /(?<=<)([\S]*)(?=>; rel="Next")/i;
+                    let pagesRemaining = true;
+                    let data = [];
+
+                    const headers = new Headers();
+                    // Add a few headers
+                    headers.set("Authorization", "Bearer ${{ steps.generate_token.outputs.token }}");
+
+                    while (pagesRemaining) {
+                      const url = `https://api.github.com/${resourcePath}&per_page:1000`;
+                      const request = new Request(url, {
+                        method: "GET",
+                        headers: headers,
+                      });
+                      console.log(`Fetching ${url}`);
+
+                      data = await fetch(request).then(async (response) => {
+                        try {
+                          const json = await response.json();
+                          const parsedData = parseData(json);
+                          console.log(`Fetched ${parsedData?.length} items`);
+                          data = [...data, ...parsedData];
+
+                          const linkHeader = response.headers.link;
+
+                          pagesRemaining = linkHeader && linkHeader.includes(`rel=\"next\"`);
+
+                          if (pagesRemaining) {
+                            resourcePath = linkHeader.match(nextPattern)[0];
+                          }
+                        } catch (error) {
+                          console.log(error);
+                        }
+                        return data;
+                      });
+                    }
+
+                    return data;
+                  }
+
+                  function parseData(data) {
+                    // If the data is an array, return that
+                    if (Array.isArray(data)) {
+                      return data;
+                    }
+
+                    // Some endpoints respond with 204 No Content instead of empty array
+                    //   when there is no data. In that case, return an empty array.
+                    if (!data) {
+                      return [];
+                    }
+
+                    // Otherwise, the array of items that we want is in an object
+                    // Delete keys that don't include the array of items
+                    delete data.incomplete_results;
+                    delete data.repository_selection;
+                    delete data.total_count;
+                    // Pull out the array of items
+                    const namespaceKey = Object.keys(data)[0];
+                    data = data[namespaceKey];
+
+                    return data;
+                  }
+
+                  async function main(date) {
+
+                      data = await getPaginatedData(
+                      `orgs/${{ matrix.org }}/audit-log?phrase=created:${date}`
+                      );
+
+                      return data;
+                  }
+
+                  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
+                  .toISOString()
+                  .split("T")[0];
+                  const outputFilename = `audit-log-${yesterday}.json`;
+
+                  main(yesterday).then((data) => {
+                      const fs = require("fs");
+                      fs.writeFileSync(outputFilename, JSON.stringify(data));
+                  })
+
+                  return outputFilename;
 
             - name: Package Audit Logs
               uses: actions/upload-artifact@v4
               with:
-                  name: ${{ matrix.org }}-${{ steps.download-audit-logs.outputs.logfile }}
-                  path: ${{ steps.download-audit-logs.outputs.logfile }}
+                  name: ${{ matrix.org }}-${{ fromJson(steps.download-audit-logs.outputs.result) }}
+                  path: ${{ github.WORKSPACE }}/${{  fromJson(steps.download-audit-logs.outputs.result) }}

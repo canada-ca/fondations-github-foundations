@@ -10,6 +10,7 @@ This section contains the Guardrails that address controls in the following cont
 - Access Control (AC)
 - Security Assessment and Authorization (CA)
 - Contingency Planning (CP)
+- Incident Response (IR)
 
 ## Conditional Requirements
 
@@ -33,4 +34,7 @@ This section contains the Guardrails that address controls in the following cont
 
 ## Related security controls from ITSG-33
 
-AC-1, CA-3, CP-1, CP-2, CP-9
+AC-1, AC-2(1),
+CA-3,
+CP-1, CP-2, CP-2(1), CP-2(2), CP-2(5), CP-2(6), CP-2(8), CP-3, CP-4, CP-4(1), CP-4(2), CP-6, CP-6(1), CP-6(2), CP-6(3), CP-7, CP-7(1), CP-7(2), CP-7(3), CP-7(4), CP-8, CP-8(1), CP-8(2), CP-8(3), CP-8(5), CP-9, CP-9(1), CP-9(2), CP-9(3), CP-9(5), CP-9(10), CP-10, CP-10(4)
+IR-1, IR-9(3)

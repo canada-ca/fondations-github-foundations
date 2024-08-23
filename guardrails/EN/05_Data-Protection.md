@@ -5,8 +5,12 @@
 ## Objective
 
 Safeguard information and assets hosted in SCMs, from unauthorized access, use, disclosure, modification, disposal, transmission, or destruction throughout their life cycle.
+
 This section contains the Guardrails that address controls in the following contexts:
 
+- Access Control (AC)
+- Audit and Accountability (AU)
+- Incident Response (IR)
 - System and Communications Protection (SC)
 
 ## Data Location Requirements
@@ -22,6 +26,7 @@ This section contains the Guardrails that address controls in the following cont
 | Implement an encryption mechanism to protect the confidentiality and integrity of data when data is at rest in storage.| <ul><li>For SaaS, confirm that the SCM platform has implemented encryption to protect customer data.</li></ul> |
 | Use cryptographic algorithms and protocols approved by Communications Security Establishment Canada (CSE) in accordance with ITSP.40.111 and ITSP.40.062.| <ul><li>Cryptographic algorithms and protocols configurable by the consumer are in accordance with ITSP.40.111 and ITSP.40.062.</li><li>For SaaS, confirm that the CSP has implemented algorithms that align with ITSP.40.111 and ITSP.40.062.</li></ul>|
 | Enforce the use of _Pull Request_ (PR) reviews, and _Protected Branches_ to ensure that code changes are reviewed and approved by at least one other developer before being merged into the main branch.| <ul><li>Confirm that PR reviews are enforced for all code changes being merged into the default branch of the repository (often called _main_, or _develop_).</li></ul> |
+| Plan, develop, and disseminate an information spillage response plan to ensure that data is handled appropriately in the event of a data spillage.| <ul><li>Provide evidence that an information spillage response plan has been developed and disseminated.</li></ul> |
 
 ## Conditional Requirements
 
@@ -29,6 +34,7 @@ This section contains the Guardrails that address controls in the following cont
 | --- | --- |
 | When dealing with personal information in cloud-based environments, seek guidance from privacy and access to information officials within institutions.| <ul><li>Confirm that privacy is part of the departmental software development life cycle.</li></ul> |
 | When available, leverage an appropriate key management system for the cryptographic protection used in cloud-based services, in accordance with the Government of Canada Considerations for the Use of Cryptography in Commercial Cloud Services and the Cyber Centre’s [Guidance on Cloud Service Cryptography (ITSP.50.106)](https://www.cyber.gc.ca/en/guidance/guidance-cloud-service-cryptography-itsp50106). | <ul><li>Confirm that a key management strategy has been adopted for the SCM platform.</li></ul> |
+| When using Public and Private Repositories, keep them separate | <ul><li>Publicly accessible repositories should be separated from private repositories used for internal development by using different organizations, projects, etc.</li></ul> |
 
 ### Self-hosting considerations
 
@@ -51,4 +57,8 @@ This section contains the Guardrails that address controls in the following cont
 
 ## Related security controls from ITSG-33
 
-SC-12, SC-13, SC-17, SC-28, SC-28(1)
+AC-6, AC-17(2), AC-22,
+AU-2,
+CM-3(6),
+IR-7, IR-9, IR-9(1), IR-9(2), IR-9(4),
+SC-12, SC-12(1), SC-12(2), SC-12(3), SC-17
