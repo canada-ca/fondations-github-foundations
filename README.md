@@ -4,7 +4,7 @@
 
 ## Securing Your GitHub Environment at Scale
 
-### Quick Start: [Get Started Now!](./README.md#getting-started)
+### [Get Started Now!](./README.md#getting-started)
 
 Managing GitHub for multiple groups introduces complex security and consistency challenges. Misaligned permission levels, team structures, incomplete change rollouts across groups, and status reporting are just a few of the obstacles that can manifest with manual processes.  The GitHub Foundations Toolkit offers a secure and efficient way to manage your organization's GitHub environment through automation and centralized control.
 
@@ -52,11 +52,12 @@ Initial setup of your state file backend, and creation of all organizations unde
 Management of organizations, repositories, and teams, Review results of drift detection, and execution of pull request plans for your organizations.
 
 #### Included Tools:
-- **Drift Detection:** Detects when someone makes a change to configuration, outside of the source-controlled configuration. Gives the ability to reapply the correct state.
-- **Deletion Protection:** When a PR change requests resources be deleted, this tool forces the user to confirm the action
-- **GitHub Advanced Security (GHAS) checks:** Checks the state of GHAS for the repos that have it enabled. Reports all of the GHAS scans in one report.
-- **Assessment tool:** Used to assess the readiness of your repo, before importing it with the toolkit. Can be used to check whether toolkit guardrails are already in place in the repo.
-- **Import tool:** Import repos not currently managed by the toolkit.
+- [**Interactive HCL tool:**](./organizations/GEN_INTERACTIVE.md) A CLI tool to help you write HCL interactively for `repositories` and `teams`.
+- [**Drift Detection:**](./organizations/DRIFT_DETECTION.md) Detects when someone makes a change to configuration, outside of the source-controlled configuration. Gives the ability to reapply the correct state.
+- [**Deletion Protection:**](./organizations/DELETION_PROTECTION.md) When a PR change requests resources be deleted, this tool forces the user to confirm the action
+- [**GitHub Advanced Security (GHAS) checks:**](./organizations/GH_ADVANCED_SECURITY.md) Runs GHAS scans for the eligible repos that have it enabled. Reports all of the GHAS scans in one report.
+- [**Assessment tool:**](./organizations/ASSESSMENT_TOOL.md) Used to assess the readiness of your repo, before importing it with the toolkit. Can be used to check whether toolkit guardrails are already in place in the repo.
+- [**Import tool:**](./organizations/IMPORT_TOOL.md) Import repos not currently managed by the toolkit.
 
 
 ## How to Contribute
@@ -78,7 +79,7 @@ The Canada wordmark and related graphics associated with this distribution are p
 
 ## Sécurité de votre environnement GitHub à grande échelle
 
-### Démarrage rapide [Bien démarrer maintenant!](#bien-démarrer)
+### [Bien démarrer maintenant!](#bien-démarrer)
 
 La gestion manuelle de GitHub pour plusieurs groupes à la fois présente des défis complexes de sécurité et d’uniformité. Les problèmes d’alignement entre les niveaux d’autorisation et les structures des équipes, le déploiement incomplet des changements dans les groupes et les rapports d’état n’en sont que quelques exemples. La trousse GitHub Foundations permet une gestion efficace et sécurisée de votre organisation par l’automatisation et la centralisation dans l’environnement GitHub.
 
@@ -136,11 +137,12 @@ Installation initiale du programme dorsal de vos fichiers d’état et création
 
 #### Outils compris
 
-* **Détection de dérive :** pour déceler les changements apportés à la configuration audelà de celle contrôlée par la source et restaurer l’état qui convient.
-* **Protection contre la suppression :** pour confirmer la suppression des ressources si celle-ci répond à un changement dans une demande de tirage.
-* **Vérifications de la fonctionnalité GHAS :** pour vérifier l’état de la fonctionnalité GHAS dans les dépôts où elle est activée et faire état des analyses GHAS dans un seul rapport.
-* **Outil d’évaluation :** pour évaluer la préparation de votre dépôt avant son importation avec la trousse et possiblement vérifier si les mesures de protection de la trousse sont déjà mises en place dans le dépôt.
-* **Outil d’importation :** pour importer des dépôts qui ne sont pas actuellement gérés par la trousse.
+* [**Outil HCL interactif :**](./organizations/GEN_INTERACTIVE.md) un outil en ligne de commande pour vous aider à écrire du HCL de manière interactive pour les `dépôts` et les `équipes`.
+* [**Détection de dérive :**](./organizations/DRIFT_DETECTION.md) pour déceler les changements apportés à la configuration audelà de celle contrôlée par la source et restaurer l’état qui convient.
+* [**Protection contre la suppression :**](./organizations/DELETION_PROTECTION.md) pour confirmer la suppression des ressources si celle-ci répond à un changement dans une demande de tirage.
+* [**Vérifications de la fonctionnalité GHAS :**](./organizations/GH_ADVANCED_SECURITY.md) pour vérifier l’état de la fonctionnalité GHAS dans les dépôts où elle est activée et faire état des analyses GHAS dans un seul rapport.
+* [**Outil d’évaluation :**](./organizations/ASSESSMENT_TOOL.md) pour évaluer la préparation de votre dépôt avant son importation avec la trousse et possiblement vérifier si les mesures de protection de la trousse sont déjà mises en place dans le dépôt.
+* [**Outil d’importation :**](./organizations/IMPORT_TOOL.md) pour importer des dépôts qui ne sont pas actuellement gérés par la trousse.
 
 ## Comment apporter sa contribution
 

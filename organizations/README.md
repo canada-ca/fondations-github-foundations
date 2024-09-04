@@ -12,6 +12,7 @@
       * [Secret Management](#secret-management)
    * [Running the Organizations Layer locally](#running-the-organizations-layer-locally)
       * [Prerequisites](#prerequisites)
+   * [Pre-installed tools](#pre-installed-tools)
 
 
 ## Introduction
@@ -171,6 +172,12 @@ Before running the organizations layer, please ensure you have the following pre
 * GCP CLI: [https://cloud.google.com/sdk/docs/install](https://cloud.google.com/sdk/docs/install)
 * GCP IAM Roles: [https://cloud.google.com/iam/docs/understanding-roles](https://cloud.google.com/iam/docs/understanding-roles)
 
-## Drift Detection
+## Pre-installed tools
 
-The GitHub Foundations toolkit comes with a [drift-detection](./DRIFT_DETECTION.md) tool pre-installed. For more information, see the [documentation here](./DRIFT_DETECTION.md)
+The GitHub Foundations toolkit comes with:
+* A [Drift Detection](./DRIFT_DETECTION.md) tool
+* An [Interactive HCL generation](./GEN_INTERACTIVE.md) tool
+* A [Deletion Protection](./DELETION_PROTECTION.md) tool
+* [GitHub Advanced Security (GHAS) checks](./GH_ADVANCED_SECURITY.md)
+* An [Assessment](./ASSESSMENT_TOOL.md) tool
+* An [Import](./IMPORT_TOOL.md) tool
