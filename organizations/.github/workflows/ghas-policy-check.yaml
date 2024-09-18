@@ -23,7 +23,7 @@ jobs:
 
             - name: Get the Go CLI
               run: |
-                curl -OL https://github.com/FociSolutions/github-foundations-cli/releases/latest/download/github-foundations-cli_Linux_x86_64.tar.gz
+                curl -OL https://github.com/canada-ca/fondations-github-foundations/releases/latest/download/github-foundations-cli_Linux_x86_64.tar.gz
                 tar -xzf github-foundations-cli_Linux_x86_64.tar.gz
 
             - name: Get the list of repos with GHAS enabled
@@ -51,7 +51,7 @@ jobs:
 
             - name: Get the GitHub token
               id: generate_token
-              uses: FociSolutions/github-foundations/organizations/.github/actions/get-gh-token@main
+              uses: canada-ca/fondations-github-foundations/organizations/.github/actions/get-gh-token@main
               with:
                   secret_store: 'gcp'
                   repo_name: ${{ matrix.repo }}

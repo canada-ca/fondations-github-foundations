@@ -1,0 +1,34 @@
+name: Gh Foundations CLI Tool Test
+
+on:
+  pull_request:
+    paths:
+      - 'cli/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.21.x' ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Install dependencies
+        run: |
+          go get .
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test ./... -json > TestResults-${{ matrix.go-version }}.json
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Go-results-${{ matrix.go-version }}
+          path: ./TestResults-${{ matrix.go-version }}.json

@@ -1,0 +1,10 @@
+with-expecter: true
+packages:
+  gh_foundations/internal/pkg/types:
+    config:
+      recursive: true
+      all: true
+      filename: "mock_{{.InterfaceName}}.go"
+      dir: "{{.InterfaceDir}}/mocks"
+      mockname: "Mock{{.InterfaceName}}"
+      outpkg: "mocks"
