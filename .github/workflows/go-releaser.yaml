@@ -3,6 +3,8 @@ name: goreleaser
 
 on:
   push:
+    paths:
+      - 'cli/**'
     # run only against tags
     tags:
       - "*"
