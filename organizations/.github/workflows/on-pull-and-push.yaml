@@ -30,7 +30,7 @@ env:
   AZURE_STORAGE_ACCOUNT_NAME: "${{vars.AZURE_STORAGE_ACCOUNT_NAME}}"
   # Requried Variables For AWS
   S3_BUCKET_NAME: "${{ vars.AWS_S3_BUCKET }}"
-  AWS_REGION: "${{ vars.AWS_REGION }}" 
+  AWS_REGION: "${{ vars.AWS_REGION }}"
   AWS_IAM_ROLE: "${{ secrets.AWS_IAM_ROLE }}"
   AWS_DYNAMO_DB_TABLE: "${{ vars.AWS_DYNAMO_DB_TABLE }}"
 
@@ -220,7 +220,7 @@ jobs:
 
       - name: Find stale Terraform lock files
         id: find-stale-lock-files
-        uses: FociSolutions/github-foundations/organizations/.github/actions/find-tf-lockfiles@main
+        uses: canada-ca/fondations-github-foundations/organizations/.github/actions/find-tf-lockfiles@main
         if: ${{ failure() &&  env.cloud_provider != 'azure' &&  env.cloud_provider != 'aws' }}
         with:
           terragrunt_output: ${{ steps.plan.outputs.tg_action_output }}
